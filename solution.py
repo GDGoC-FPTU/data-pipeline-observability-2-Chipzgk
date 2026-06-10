@@ -42,14 +42,14 @@ def extract(file_path):
         list: Danh sach cac records (dictionaries)
     """
     print(f"Extracting data from {file_path}...")
-    # TODO: Viet code doc file JSON o day
-    # Vi du:
-    #   with open(file_path, 'r') as f:
-    #       data = json.load(f)
-    #   return data
-    data = json.load(open(file_path))
-    return data
-    # pass
+    try:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+        print(f"✓ Successfully extracted {len(data)} records")
+        return data
+    except FileNotFoundError:
+        print(f"✗ Error: File '{file_path}' not found!")
+        return None
 
 
 def validate(data):
@@ -103,19 +103,15 @@ def transform(data):
     Returns:
         pd.DataFrame: DataFrame da duoc transform
     """
-    # TODO: Tao DataFrame va ap dung transformations
-
+    print(f"Transforming {len(data)} records...")
+    
     df = pd.DataFrame(data)
-
     df['discounted_price'] = df['price'] * 0.9
-
     df['category'] = df['category'].str.title()
-
-    df['proccessed_at'] = datetime.datetime.now().isoformat()
-
+    df['processed_at'] = datetime.datetime.now().isoformat()
+    
+    print(f"✓ Transform complete. Added columns: discounted_price, processed_at")
     return df
-
-    # pass
 
 
 def load(df, output_path):
@@ -125,11 +121,9 @@ def load(df, output_path):
     Goi y:
        - df.to_csv(output_path, index=False)
     """
-    # TODO: Luu DataFrame ra CSV
-
+    print(f"Loading {len(df)} records to {output_path}...")
     df.to_csv(output_path, index=False)
-
-    print(f"Data saved to {output_path}")
+    print(f"✓ Data saved to {output_path}")
 
 
 # ============================================================
@@ -153,8 +147,11 @@ if __name__ == "__main__":
         # 4. Load
         if final_df is not None:
             load(final_df, OUTPUT_FILE)
-            print(f"\nPipeline completed! {len(final_df)} records saved.")
+            print("\n" + "=" * 50)
+            print(f"✓ Pipeline completed successfully!")
+            print(f"  Total records processed: {len(final_df)}")
+            print("=" * 50)
         else:
-            print("\nTransform returned None. Check your transform() function.")
+            print("\n✗ Transform returned None. Check your transform() function.")
     else:
-        print("\nPipeline aborted: No data extracted.")
+        print("\n✗ Pipeline aborted: No data extracted.")

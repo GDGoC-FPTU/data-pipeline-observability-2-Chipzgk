@@ -41,14 +41,12 @@ def extract(file_path):
     Returns:
         list: Danh sach cac records (dictionaries)
     """
-    print(f"Extracting data from {file_path}...")
     try:
         with open(file_path, 'r') as f:
             data = json.load(f)
-        print(f"✓ Successfully extracted {len(data)} records")
         return data
     except FileNotFoundError:
-        print(f"✗ Error: File '{file_path}' not found!")
+        print(f"Error: File '{file_path}' not found!")
         return None
 
 
@@ -69,19 +67,20 @@ def validate(data):
         list: Danh sach cac records hop le
     """
     valid_records = []
-    error_count = 0
-
-    # TODO: Lap qua data, kiem tra tung record
-    # Giu lai record hop le, dem record loi
+    errors = []
 
     for item in data:
-        if item.get('price',0)>0 and item.get('category'):
-            valid_records.append(item)
+        if item.get('price', 0) <= 0:
+            errors.append({'id': item.get('id'), 'reason': 'Price <= 0'})
+        elif not item.get('category'):
+            errors.append({'id': item.get('id'), 'reason': 'Missing category'})
         else:
-            error_count +=1
+            valid_records.append(item)
 
-
-    print(f"Validation complete. Valid: {len(valid_records)}, Errors: {error_count}")
+    print(f"Validation summary: {len(valid_records)} kept, {len(errors)} dropped.")
+    if errors:
+        print(f"Errors found: {errors}")
+    
     return valid_records
 
 
@@ -103,14 +102,11 @@ def transform(data):
     Returns:
         pd.DataFrame: DataFrame da duoc transform
     """
-    print(f"Transforming {len(data)} records...")
-    
     df = pd.DataFrame(data)
     df['discounted_price'] = df['price'] * 0.9
     df['category'] = df['category'].str.title()
     df['processed_at'] = datetime.datetime.now().isoformat()
     
-    print(f"✓ Transform complete. Added columns: discounted_price, processed_at")
     return df
 
 
@@ -121,16 +117,14 @@ def load(df, output_path):
     Goi y:
        - df.to_csv(output_path, index=False)
     """
-    print(f"Loading {len(df)} records to {output_path}...")
     df.to_csv(output_path, index=False)
-    print(f"✓ Data saved to {output_path}")
+    print(f"Successfully loaded {len(df)} records to {output_path}")
 
 
 # ============================================================
 # MAIN PIPELINE
 # ============================================================
 if __name__ == "__main__":
-    print("=" * 50)
     print("ETL Pipeline Started...")
     print("=" * 50)
 
@@ -147,11 +141,8 @@ if __name__ == "__main__":
         # 4. Load
         if final_df is not None:
             load(final_df, OUTPUT_FILE)
-            print("\n" + "=" * 50)
-            print(f"✓ Pipeline completed successfully!")
-            print(f"  Total records processed: {len(final_df)}")
-            print("=" * 50)
+            print(f"\nPipeline completed! {len(final_df)} records saved.")
         else:
-            print("\n✗ Transform returned None. Check your transform() function.")
+            print("\nTransform returned None. Check your transform() function.")
     else:
-        print("\n✗ Pipeline aborted: No data extracted.")
+        print("\nPipeline aborted: No data extracted.")
